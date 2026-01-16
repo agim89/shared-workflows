@@ -1,0 +1,12 @@
+on:
+  workflow_call:
+
+jobs:
+  consumer:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          conan install --requires=mylib/1.0.0-dev-@ --remote conan-rc
+          cmake -S consumer-test -B build
+          cmake --build build
+          ./build/consumer

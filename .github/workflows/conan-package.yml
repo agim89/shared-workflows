@@ -1,0 +1,57 @@
+name: Conan package & publish
+
+on:
+  workflow_call:
+    inputs:
+      version:
+        description: "Package version (X.Y.Z or X.Y.Z-dev-)"
+        required: true
+        type: string
+      remote:
+        description: "Conan remote (conan-rc or conan-stable)"
+        required: true
+        type: string
+      profile:
+        description: "Conan profile name"
+        required: false
+        default: default
+        type: string
+
+jobs:
+  package:
+    name: Package (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Install Conan 2
+        uses: conan-io/setup-conan@v1
+        with:
+          conan-version: 2.0
+
+      - name: Detect profile
+        shell: bash
+        run: |
+          conan profile detect --force
+
+      - name: Create Conan package
+        shell: bash
+        run: |
+          conan create . \
+            --version=${{ inputs.version }} \
+            --profile=${{ inputs.profile }} \
+            --build=missing
+
+      - name: Upload to remote
+        shell: bash
+        run: |
+          conan upload "mylib/${{ inputs.version }}" \
+            --remote=${{ inputs.remote }} \
+            --confirm

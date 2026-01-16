@@ -1,0 +1,24 @@
+name: build-test
+on:
+  workflow_call:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: conan-io/setup-conan@v1
+        with:
+          conan-version: 2.0
+
+      - name: Build & Test
+        run: |
+          conan install . --profile profiles/${{ runner.os | toLower }} --lockfile conan.lock
+          cmake -B build -S .
+          cmake --build build
+          ctest --test-dir build
