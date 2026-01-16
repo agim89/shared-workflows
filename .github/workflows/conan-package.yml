@@ -34,7 +34,7 @@ jobs:
       - name: Install Conan 2
         uses: conan-io/setup-conan@v1
         with:
-          conan-version: 2.0
+          version: 2.0
 
       - name: Detect profile
         shell: bash
