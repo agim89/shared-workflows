@@ -61,6 +61,10 @@ on:
       remote:
         required: true
         type: string
+      git_sha:
+        required: false
+        type: string
+        default: ""
 
 jobs:
   consumer-test:
@@ -76,7 +80,12 @@ jobs:
 
       - name: Get git SHA
         id: sha
-        run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+        run: |
+          if [ -n "${{ inputs.git_sha }}" ]; then
+            echo "short_sha=${{ inputs.git_sha }}" >> $GITHUB_OUTPUT
+          else
+            echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+          fi
         shell: bash
 
       - name: Set full version
