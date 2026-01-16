@@ -25,8 +25,20 @@ jobs:
 
       - name: Configure Conan remotes
         run: |
-          conan remote add conan-rc "${{ secrets.CONAN_RC_URL }}" --force || true
-          conan remote add conan-stable "${{ secrets.CONAN_STABLE_URL }}" --force || true
+          conan remote remove conan-rc || true
+          conan remote remove conan-stable || true
+          conan remote add conan-rc "${{ secrets.CONAN_RC_URL }}"
+          conan remote add conan-stable "${{ secrets.CONAN_STABLE_URL }}"
+          conan remote list
+        shell: bash
+
+      - name: Authenticate to Conan remotes
+        run: |
+          # Authenticate to both remotes; promotion requires access to conan-stable
+          conan user -r conan-rc "${{ secrets.CONAN_USERNAME }}" -p "${{ secrets.CONAN_PASSWORD }}" || true
+          conan user -r conan-stable "${{ secrets.CONAN_USERNAME }}" -p "${{ secrets.CONAN_PASSWORD }}"
+          conan remote list
+        shell: bash
 
       - name: Download RC package from conan-rc
         run: |

@@ -51,15 +51,22 @@ jobs:
 
       - name: Configure Conan remotes
         run: |
-          conan remote add conan-rc "${{ secrets.CONAN_RC_URL }}" --force || true
-          conan remote add conan-stable "${{ secrets.CONAN_STABLE_URL }}" --force || true
+          # remove old entries to avoid leftover read-only remotes in runner
+          conan remote remove conan-rc || true
+          conan remote remove conan-stable || true
+          # add the remotes from secrets (must be upload-capable URLs)
+          conan remote add conan-rc "${{ secrets.CONAN_RC_URL }}"
+          conan remote add conan-stable "${{ secrets.CONAN_STABLE_URL }}"
+          conan remote list
         shell: bash
 
       - name: Authenticate to Conan remote
         run: |
-          conan remote login "${{ inputs.remote }}" "${{ secrets.CONAN_USERNAME }}" -p "${{ secrets.CONAN_PASSWORD }}"
+          # Use `conan user -r` to authenticate to the target remote.
+          # Make this step fail the job if auth fails so we don't try to upload to a read-only remote.
+          conan user -r "${{ inputs.remote }}" "${{ secrets.CONAN_USERNAME }}" -p "${{ secrets.CONAN_PASSWORD }}"
+          conan remote list
         shell: bash
-        continue-on-error: true
 
       - name: Check if version exists in stable (for RC publish)
         if: ${{ inputs.remote == 'conan-stable' }}
