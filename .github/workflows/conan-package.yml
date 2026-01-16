@@ -135,17 +135,16 @@ jobs:
       - name: Configure Conan remotes
         run: |
           # remove old entries to avoid leftover read-only remotes in runner
-            conan remote remove conan-rc --force || true
-            conan remote remove conan-stable --force || true
-            conan remote add conan-rc "${{ secrets.CONAN_RC_URL }}" --force
-            conan remote add conan-stable "${{ secrets.CONAN_STABLE_URL }}" --force
-            conan remote list
+          conan remote remove conan-rc --force || true
+          conan remote remove conan-stable --force || true
+          conan remote add conan-rc "${{ secrets.CONAN_RC_URL }}" --force
+          conan remote add conan-stable "${{ secrets.CONAN_STABLE_URL }}" --force
+          conan remote list
         shell: bash
 
       - name: Authenticate to Conan remote
         run: |
           conan user -r "${{ inputs.remote }}" "${{ secrets.CONAN_USERNAME }}" -p "${{ secrets.CONAN_PASSWORD }}"
-        shell: bash
         shell: bash
 
       - name: Check if version exists in stable (for RC publish)
