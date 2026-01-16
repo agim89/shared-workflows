@@ -66,10 +66,10 @@ jobs:
         continue-on-error: true
 
       - name: Create Conan package
-        run: conan create . --version=${{ inputs.version }} --build=missing
+        run: conan create . --version=${{ env.CONAN_VERSION }} --build=missing
         env:
           CONAN_LOGIN_USERNAME: ${{ secrets.CONAN_USERNAME }}
           CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
 
       - name: Upload to remote
-        run: conan upload "mylib/${{ inputs.version }}" --remote="${{ inputs.remote }}" --confirm
+        run: conan upload "mylib/${{ env.CONAN_VERSION }}" --remote="${{ inputs.remote }}" --confirm
