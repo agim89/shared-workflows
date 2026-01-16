@@ -55,6 +55,11 @@ jobs:
           conan remote add conan-stable "${{ secrets.CONAN_STABLE_URL }}" --force || true
         shell: bash
 
+      - name: Login to Conan remote
+        run: |
+          conan remote login "${{ inputs.remote }}" "${{ secrets.CONAN_USERNAME }}" -p "${{ secrets.CONAN_PASSWORD }}"
+        shell: bash
+
       - name: Check if version exists in stable (for RC publish)
         if: ${{ inputs.remote == 'conan-stable' }}
         run: |
