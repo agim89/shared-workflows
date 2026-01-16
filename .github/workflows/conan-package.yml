@@ -12,51 +12,40 @@ on:
 
 jobs:
   package:
-    name: Package (${{ matrix.os }})
     strategy:
-      fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-
     runs-on: ${{ matrix.os }}
 
     steps:
-      - name: Checkout sources
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Install Conan 2
-        uses: conan-io/setup-conan@v1
+      - uses: conan-io/setup-conan@v1
         with:
           conan-version: 2.0
 
       - name: Detect Conan profile
-        shell: bash
-        run: |
-          conan profile detect --force
+        run: conan profile detect --force
 
-      # 🔽 THIS IS WHERE YOUR DATA GOES
       - name: Configure Conan remotes
-        shell: bash
         run: |
           conan remote add conan-rc "${{ secrets.CONAN_RC_URL }}" --force
           conan remote add conan-stable "${{ secrets.CONAN_STABLE_URL }}" --force
 
-      - name: Authenticate to JFrog
-        shell: bash
-        run: |
-          conan remote login conan-rc "${{ secrets.CONAN_USERNAME }}" -p "${{ secrets.CONAN_PASSWORD }}"
-          conan remote login conan-stable "${{ secrets.CONAN_USERNAME }}" -p "${{ secrets.CONAN_PASSWORD }}"
-
       - name: Create Conan package
-        shell: bash
         run: |
           conan create . \
             --version=${{ inputs.version }} \
             --build=missing
+        env:
+          CONAN_LOGIN_USERNAME: ${{ secrets.CONAN_USERNAME }}
+          CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
 
       - name: Upload to remote
-        shell: bash
         run: |
           conan upload "mylib/${{ inputs.version }}" \
             --remote=${{ inputs.remote }} \
             --confirm
+        env:
+          CONAN_LOGIN_USERNAME: ${{ secrets.CONAN_USERNAME }}
+          CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
