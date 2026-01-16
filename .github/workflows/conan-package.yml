@@ -146,6 +146,7 @@ jobs:
         run: |
           conan remote login "${{ inputs.remote }}" "${{ secrets.CONAN_USERNAME }}" -p "${{ secrets.CONAN_PASSWORD }}"
         shell: bash
+        continue-on-error: true
 
       - name: Check if version exists in stable (for RC publish)
         if: ${{ inputs.remote == 'conan-stable' }}
