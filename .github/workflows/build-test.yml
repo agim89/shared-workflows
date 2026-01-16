@@ -74,7 +74,7 @@ jobs:
 
       - name: Build (Windows)
         run: |
-          cmake --build --preset conan-default
+          cmake --build --preset conan-release
         if: runner.os == 'Windows'
 
       - name: Run unit tests
