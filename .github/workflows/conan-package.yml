@@ -4,17 +4,10 @@ on:
   workflow_call:
     inputs:
       version:
-        description: "Package version (X.Y.Z or X.Y.Z-dev-)"
         required: true
         type: string
       remote:
-        description: "Conan remote (conan-rc or conan-stable)"
         required: true
-        type: string
-      profile:
-        description: "Conan profile name"
-        required: false
-        default: default
         type: string
 
 jobs:
@@ -36,17 +29,29 @@ jobs:
         with:
           conan-version: 2.0
 
-      - name: Detect profile
+      - name: Detect Conan profile
         shell: bash
         run: |
           conan profile detect --force
+
+      # 🔽 THIS IS WHERE YOUR DATA GOES
+      - name: Configure Conan remotes
+        shell: bash
+        run: |
+          conan remote add conan-rc "${{ secrets.CONAN_RC_URL }}" --force
+          conan remote add conan-stable "${{ secrets.CONAN_STABLE_URL }}" --force
+
+      - name: Authenticate to JFrog
+        shell: bash
+        run: |
+          conan remote login conan-rc "${{ secrets.CONAN_USERNAME }}" -p "${{ secrets.CONAN_PASSWORD }}"
+          conan remote login conan-stable "${{ secrets.CONAN_USERNAME }}" -p "${{ secrets.CONAN_PASSWORD }}"
 
       - name: Create Conan package
         shell: bash
         run: |
           conan create . \
             --version=${{ inputs.version }} \
-            --profile=${{ inputs.profile }} \
             --build=missing
 
       - name: Upload to remote
