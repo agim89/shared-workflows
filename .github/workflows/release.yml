@@ -1,3 +1,76 @@
+# name: Create Release
+
+# on:
+#   workflow_call:
+#     inputs:
+#       version:
+#         required: true
+#         type: string
+
+# jobs:
+#   release:
+#     runs-on: ubuntu-latest
+#     permissions:
+#       contents: write
+#       packages: write
+    
+#     steps:
+#       - uses: actions/checkout@v4
+#         with:
+#           fetch-depth: 0
+
+#       - uses: conan-io/setup-conan@v1
+#         with:
+#           version: 2.24.0
+
+#       - name: Configure Conan remotes
+#         run: |
+#           conan remote add conan-rc "${{ secrets.CONAN_RC_URL }}" --force || true
+#           conan remote add conan-stable "${{ secrets.CONAN_STABLE_URL }}" --force || true
+
+#       - name: Download RC package from conan-rc
+#         run: |
+#           # Get short SHA from last RC build
+#           git log --oneline -1
+#           SHORT_SHA=$(git rev-parse --short HEAD)
+#           RC_VERSION="${{ inputs.version }}-dev-${SHORT_SHA}"
+#           echo "RC_VERSION=${RC_VERSION}" >> $GITHUB_ENV
+#           echo "FINAL_VERSION=${{ inputs.version }}" >> $GITHUB_ENV
+
+#       - name: Promote RC to stable
+#         run: |
+#           conan download "mylib/${{ env.RC_VERSION }}" --remote=conan-rc
+#           conan upload "mylib/${{ env.FINAL_VERSION }}" --remote=conan-stable --confirm
+#         env:
+#           CONAN_LOGIN_USERNAME: ${{ secrets.CONAN_USERNAME }}
+#           CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
+#         continue-on-error: false
+
+#       - name: Create Git tag
+#         run: |
+#           git tag -a "v${{ env.FINAL_VERSION }}" -m "Release ${{ env.FINAL_VERSION }}"
+#           git push origin "v${{ env.FINAL_VERSION }}"
+
+#       - name: Create GitHub Release
+#         uses: actions/create-release@v1
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+#         with:
+#           tag_name: v${{ env.FINAL_VERSION }}
+#           release_name: Release ${{ env.FINAL_VERSION }}
+#           body: |
+#             Automated release of mylib ${{ env.FINAL_VERSION }}
+            
+#             **Package Reference:** `mylib/${{ env.FINAL_VERSION }}`
+#             **Remote:** `conan-stable`
+            
+#             Install with:
+#             ```
+#             conan install --requires=mylib/${{ env.FINAL_VERSION }}
+#             ```
+#           draft: false
+#           prerelease: false
+
 name: Create Release
 
 on:
@@ -25,8 +98,20 @@ jobs:
 
       - name: Configure Conan remotes
         run: |
-          conan remote add conan-rc "${{ secrets.CONAN_RC_URL }}" --force || true
-          conan remote add conan-stable "${{ secrets.CONAN_STABLE_URL }}" --force || true
+          conan remote remove conan-rc || true
+          conan remote remove conan-stable || true
+          conan remote add conan-rc "${{ secrets.CONAN_RC_URL }}"
+          conan remote add conan-stable "${{ secrets.CONAN_STABLE_URL }}"
+          conan remote list
+        shell: bash
+
+      - name: Authenticate to Conan remotes
+        run: |
+          # Authenticate to both remotes; promotion requires access to conan-stable
+          conan user -r conan-rc "${{ secrets.CONAN_USERNAME }}" -p "${{ secrets.CONAN_PASSWORD }}" || true
+          conan user -r conan-stable "${{ secrets.CONAN_USERNAME }}" -p "${{ secrets.CONAN_PASSWORD }}"
+          conan remote list
+        shell: bash
 
       - name: Download RC package from conan-rc
         run: |
