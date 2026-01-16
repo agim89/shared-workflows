@@ -42,24 +42,29 @@ jobs:
           conan profile detect --force
         if: runner.os == 'macOS'
 
-      - name: Conan install & generate toolchain
+      - name: Conan install & generate toolchain (Linux)
         run: |
-          conan install . --profile=profiles/${{ matrix.profile }} --build=missing -of build
-        if: runner.os != 'macOS'
+          conan install . --profile=profiles/${{ matrix.profile }} --build=missing
+        if: runner.os == 'Linux'
 
       - name: Conan install & generate toolchain (macOS)
         run: |
-          conan install . --build=missing -of build
+          conan install . --build=missing
         if: runner.os == 'macOS'
+
+      - name: Conan install & generate toolchain (Windows)
+        run: |
+          conan install . --profile=profiles/${{ matrix.profile }} --build=missing -of build
+        if: runner.os == 'Windows'
 
       - name: Configure CMake (Linux/macOS)
         run: |
-          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake
+          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=build/Release/generators/conan_toolchain.cmake
         if: runner.os != 'Windows'
 
       - name: Configure CMake (Windows)
         run: |
-          cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake
+          cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=build/generators/conan_toolchain.cmake
         if: runner.os == 'Windows'
 
       - name: Build
