@@ -59,12 +59,12 @@ jobs:
 
       - name: Configure CMake (Linux/macOS)
         run: |
-          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=build/Release/generators/conan_toolchain.cmake
+          cmake --preset conan-default -DBUILD_TESTING=ON
         if: runner.os != 'Windows'
 
       - name: Configure CMake (Windows)
         run: |
-          cmake -B build -S . "-DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake"
+          cmake --preset conan-default -DBUILD_TESTING=ON
         if: runner.os == 'Windows'
 
       - name: Build
