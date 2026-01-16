@@ -68,6 +68,7 @@ jobs:
       - name: Create Conan package
         run: conan create . --version=${{ env.CONAN_VERSION }} --build=missing
         env:
+          CONAN_VERSION: ${{ env.CONAN_VERSION }}
           CONAN_LOGIN_USERNAME: ${{ secrets.CONAN_USERNAME }}
           CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
 
