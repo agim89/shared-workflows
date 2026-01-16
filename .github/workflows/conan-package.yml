@@ -55,7 +55,8 @@ jobs:
           conan remote add conan-stable "${{ secrets.CONAN_STABLE_URL }}" --force || true
         shell: bash
 
-      - name: Login to Conan remote
+      - name: Authenticate to Conan remote (if credentials provided)
+        if: ${{ secrets.CONAN_USERNAME != '' && secrets.CONAN_PASSWORD != '' }}
         run: |
           conan remote login "${{ inputs.remote }}" "${{ secrets.CONAN_USERNAME }}" -p "${{ secrets.CONAN_PASSWORD }}"
         shell: bash
