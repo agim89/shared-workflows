@@ -52,9 +52,15 @@ jobs:
           conan install . --build=missing
         if: runner.os == 'macOS'
 
-      - name: Configure CMake
+      - name: Configure CMake (Linux/macOS)
         run: |
           cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=build/Release/generators/conan_toolchain.cmake
+        if: runner.os != 'Windows'
+
+      - name: Configure CMake (Windows)
+        run: |
+          cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=build/generators/conan_toolchain.cmake
+        if: runner.os == 'Windows'
 
       - name: Build
         run: |
