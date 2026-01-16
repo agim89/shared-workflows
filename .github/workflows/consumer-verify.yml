@@ -120,8 +120,7 @@ jobs:
       - name: Configure consumer project
         run: |
           cd consumer-test
-          conan install . --build=missing
-          cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=../conan_toolchain.cmake
+          cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=../build/Release/generators/conan_toolchain.cmake
 
       - name: Build consumer project
         run: |
