@@ -109,6 +109,8 @@ jobs:
           - os: windows-latest
             profile: windows
     runs-on: ${{ matrix.os }}
+    outputs:
+      conan_version: ${{ env.CONAN_VERSION }}
 
     steps:
       - uses: actions/checkout@v4
