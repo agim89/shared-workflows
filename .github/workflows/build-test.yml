@@ -6,7 +6,13 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            profile: linux
+          - os: macos-latest
+            profile: macos
+          - os: windows-latest
+            profile: windows
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -16,9 +22,33 @@ jobs:
         with:
           version: 2.0
 
-      - name: Build & Test
+      - name: Install dependencies (clang-format, cmake)
         run: |
-          conan install . --profile profiles/${{ runner.os | toLower }} --lockfile conan.lock
-          cmake -B build -S .
-          cmake --build build
-          ctest --test-dir build
+          if [ "${{ runner.os }}" == "Linux" ]; then
+            sudo apt-get update && sudo apt-get install -y clang-format cmake ninja-build
+          elif [ "${{ runner.os }}" == "macOS" ]; then
+            brew install clang-format cmake ninja
+          fi
+        shell: bash
+
+      - name: Format check (clang-format)
+        run: |
+          find src include tests -name "*.cpp" -o -name "*.h" | xargs clang-format -i
+          git diff --exit-code || (echo "Format check failed. Please run clang-format."; exit 1)
+        shell: bash
+
+      - name: Conan install & generate toolchain
+        run: |
+          conan install . --profile=profiles/${{ matrix.profile }} --build=missing
+
+      - name: Configure CMake
+        run: |
+          cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE=build/Release/generators/conan_toolchain.cmake
+
+      - name: Build
+        run: |
+          cmake --build build --config Release
+
+      - name: Run unit tests
+        run: |
+          ctest --test-dir build --output-on-failure

@@ -1,12 +1,51 @@
+name: Consumer Integration Test
+
 on:
   workflow_call:
+    inputs:
+      version:
+        required: true
+        type: string
+      remote:
+        required: true
+        type: string
 
 jobs:
-  consumer:
+  consumer-test:
     runs-on: ubuntu-latest
     steps:
-      - run: |
-          conan install --requires=mylib/1.0.0-dev-@ --remote conan-rc
-          cmake -S consumer-test -B build
+      - uses: actions/checkout@v4
+
+      - uses: conan-io/setup-conan@v1
+        with:
+          version: 2.0
+
+      - name: Configure Conan remotes
+        run: |
+          conan remote add conan-rc "${{ secrets.CONAN_RC_URL }}" --force || true
+          conan remote add conan-stable "${{ secrets.CONAN_STABLE_URL }}" --force || true
+
+      - name: Install mylib dependency
+        run: |
+          conan install --requires=mylib/${{ inputs.version }} \
+            --build=missing \
+            --remote=${{ inputs.remote }}
+        env:
+          CONAN_LOGIN_USERNAME: ${{ secrets.CONAN_USERNAME }}
+          CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
+
+      - name: Configure consumer project
+        run: |
+          cd consumer-test
+          conan install . --build=missing
+          cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=../conan_toolchain.cmake
+
+      - name: Build consumer project
+        run: |
+          cd consumer-test
           cmake --build build
-          ./build/consumer
+
+      - name: Run consumer test
+        run: |
+          cd consumer-test/build
+          ./consumer || .\\consumer.exe

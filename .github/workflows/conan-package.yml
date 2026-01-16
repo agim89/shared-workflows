@@ -9,12 +9,22 @@ on:
       remote:
         required: true
         type: string
+      is_rc:
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   package:
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        include:
+          - os: ubuntu-latest
+            profile: linux
+          - os: macos-latest
+            profile: macos
+          - os: windows-latest
+            profile: windows
     runs-on: ${{ matrix.os }}
 
     steps:
@@ -22,28 +32,52 @@ jobs:
 
       - uses: conan-io/setup-conan@v1
         with:
-          conan-version: 2.0
+          version: 2.0
 
-      - name: Detect Conan profile
-        run: conan profile detect --force
+      - name: Get short git SHA
+        id: sha
+        run: echo "short_sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - name: Set RC version with git SHA
+        if: ${{ inputs.is_rc }}
+        run: echo "CONAN_VERSION=${{ inputs.version }}${{ steps.sha.outputs.short_sha }}" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Set Release version
+        if: ${{ !inputs.is_rc }}
+        run: echo "CONAN_VERSION=${{ inputs.version }}" >> $GITHUB_ENV
+        shell: bash
 
       - name: Configure Conan remotes
         run: |
-          conan remote add conan-rc "${{ secrets.CONAN_RC_URL }}" --force
-          conan remote add conan-stable "${{ secrets.CONAN_STABLE_URL }}" --force
+          conan remote add conan-rc "${{ secrets.CONAN_RC_URL }}" --force || true
+          conan remote add conan-stable "${{ secrets.CONAN_STABLE_URL }}" --force || true
+        shell: bash
+
+      - name: Check if version exists in stable (for RC publish)
+        if: ${{ inputs.remote == 'conan-stable' }}
+        run: |
+          if conan search "mylib/${{ env.CONAN_VERSION }}" --remote=conan-stable; then
+            echo "ERROR: Version ${{ env.CONAN_VERSION }} already exists in conan-stable!"
+            exit 1
+          fi
+        shell: bash
+        continue-on-error: true
 
       - name: Create Conan package
         run: |
           conan create . \
-            --version=${{ inputs.version }} \
+            --version=${{ env.CONAN_VERSION }} \
+            --profile=profiles/${{ matrix.profile }} \
             --build=missing
         env:
           CONAN_LOGIN_USERNAME: ${{ secrets.CONAN_USERNAME }}
           CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
 
-      - name: Upload to remote
+      - name: Upload to Conan remote
         run: |
-          conan upload "mylib/${{ inputs.version }}" \
+          conan upload "mylib/${{ env.CONAN_VERSION }}" \
             --remote=${{ inputs.remote }} \
             --confirm
         env:
