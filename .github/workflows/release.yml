@@ -98,10 +98,10 @@ jobs:
 
       - name: Configure Conan remotes
         run: |
-          conan remote remove conan-rc || true
-          conan remote remove conan-stable || true
-          conan remote add conan-rc "${{ secrets.CONAN_RC_URL }}"
-          conan remote add conan-stable "${{ secrets.CONAN_STABLE_URL }}"
+          conan remote remove conan-rc --force || true
+          conan remote remove conan-stable --force || true
+          conan remote add conan-rc "${{ secrets.CONAN_RC_URL }}" --force
+          conan remote add conan-stable "${{ secrets.CONAN_STABLE_URL }}" --force
           conan remote list
         shell: bash
 
