@@ -59,7 +59,7 @@ jobs:
 
       - name: Configure CMake (Linux/macOS)
         run: |
-          cmake --preset conan-default
+          cmake --preset conan-release
         if: runner.os != 'Windows'
 
       - name: Configure CMake (Windows)
@@ -69,7 +69,13 @@ jobs:
 
       - name: Build
         run: |
+          cmake --build --preset conan-release
+        if: runner.os != 'Windows'
+
+      - name: Build (Windows)
+        run: |
           cmake --build --preset conan-default
+        if: runner.os == 'Windows'
 
       - name: Run unit tests
         run: |
