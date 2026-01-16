@@ -42,10 +42,4 @@ jobs:
           CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
 
       - name: Upload to remote
-        run: |
-          conan upload "mylib/${{ inputs.version }}" \
-            --remote=${{ inputs.remote }} \
-            --confirm
-        env:
-          CONAN_LOGIN_USERNAME: ${{ secrets.CONAN_USERNAME }}
-          CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
+        run: conan upload "mylib/${{ inputs.version }}" --remote="${{ inputs.remote }}" --confirm
