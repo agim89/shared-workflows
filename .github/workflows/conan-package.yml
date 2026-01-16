@@ -33,10 +33,7 @@ jobs:
           conan remote add conan-stable "${{ secrets.CONAN_STABLE_URL }}" --force
 
       - name: Create Conan package
-        run: |
-          conan create . \
-            --version=${{ inputs.version }} \
-            --build=missing
+        run: conan create . --version=${{ inputs.version }} --build=missing
         env:
           CONAN_LOGIN_USERNAME: ${{ secrets.CONAN_USERNAME }}
           CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
