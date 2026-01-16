@@ -112,8 +112,7 @@ jobs:
       - name: Install mylib dependency
         run: |
           conan install --requires=mylib/${{ env.FULL_VERSION }} \
-            --build=missing \
-            --remote=${{ inputs.remote }}
+            --build=missing
         env:
           CONAN_LOGIN_USERNAME: ${{ secrets.CONAN_USERNAME }}
           CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
