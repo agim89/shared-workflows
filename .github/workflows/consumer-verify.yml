@@ -112,7 +112,9 @@ jobs:
       - name: Install mylib dependency
         run: |
           conan install --requires=mylib/${{ env.FULL_VERSION }} \
-            --build=missing
+            -g CMakeDeps -g CMakeToolchain \
+            --build=missing \
+            -of consumer-test/build
         env:
           CONAN_LOGIN_USERNAME: ${{ secrets.CONAN_USERNAME }}
           CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
@@ -120,7 +122,7 @@ jobs:
       - name: Configure consumer project
         run: |
           cd consumer-test
-          cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=../build/Release/generators/conan_toolchain.cmake
+          cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake
 
       - name: Build consumer project
         run: |
