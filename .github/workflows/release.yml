@@ -108,8 +108,8 @@ jobs:
       - name: Authenticate to Conan remotes
         run: |
           # Authenticate to both remotes; promotion requires access to conan-stable
-          conan user -r conan-rc "${{ secrets.CONAN_USERNAME }}" -p "${{ secrets.CONAN_PASSWORD }}" || true
-          conan user -r conan-stable "${{ secrets.CONAN_USERNAME }}" -p "${{ secrets.CONAN_PASSWORD }}"
+          conan remote login conan-rc "${{ secrets.CONAN_USERNAME }}" -p "${{ secrets.CONAN_PASSWORD }}" || true
+          conan remote login conan-stable "${{ secrets.CONAN_USERNAME }}" -p "${{ secrets.CONAN_PASSWORD }}"
           conan remote list
         shell: bash
 

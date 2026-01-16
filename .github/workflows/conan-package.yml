@@ -144,7 +144,7 @@ jobs:
 
       - name: Authenticate to Conan remote
         run: |
-          conan user -r "${{ inputs.remote }}" "${{ secrets.CONAN_USERNAME }}" -p "${{ secrets.CONAN_PASSWORD }}"
+          conan remote login "${{ inputs.remote }}" "${{ secrets.CONAN_USERNAME }}" -p "${{ secrets.CONAN_PASSWORD }}"
         shell: bash
 
       - name: Check if version exists in stable (for RC publish)

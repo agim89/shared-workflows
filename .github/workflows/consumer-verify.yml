@@ -84,7 +84,7 @@ jobs:
       - name: Authenticate to Conan remotes
         run: |
           # Auth to the remote we will install from
-          conan user -r "${{ inputs.remote }}" "${{ secrets.CONAN_USERNAME }}" -p "${{ secrets.CONAN_PASSWORD }}"
+          conan remote login "${{ inputs.remote }}" "${{ secrets.CONAN_USERNAME }}" -p "${{ secrets.CONAN_PASSWORD }}"
           conan remote list
         shell: bash
 
