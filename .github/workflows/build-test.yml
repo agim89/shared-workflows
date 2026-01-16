@@ -39,7 +39,13 @@ jobs:
 
       - name: Conan install & generate toolchain
         run: |
+          conan install . --profile=profiles/${{ matrix.profile }} --build=missing -s compiler.version=16
+        if: runner.os == 'macOS'
+
+      - name: Conan install & generate toolchain (non-macOS)
+        run: |
           conan install . --profile=profiles/${{ matrix.profile }} --build=missing
+        if: runner.os != 'macOS'
 
       - name: Configure CMake
         run: |
