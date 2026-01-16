@@ -55,11 +55,11 @@ jobs:
           conan remote add conan-stable "${{ secrets.CONAN_STABLE_URL }}" --force || true
         shell: bash
 
-      - name: Authenticate to Conan remote (if credentials provided)
-        if: secrets.CONAN_USERNAME != ''
+      - name: Authenticate to Conan remote
         run: |
           conan remote login "${{ inputs.remote }}" "${{ secrets.CONAN_USERNAME }}" -p "${{ secrets.CONAN_PASSWORD }}"
         shell: bash
+        continue-on-error: true
 
       - name: Check if version exists in stable (for RC publish)
         if: ${{ inputs.remote == 'conan-stable' }}
