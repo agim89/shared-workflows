@@ -139,6 +139,7 @@ jobs:
           # Clean and re-add upload-capable remotes from secrets
           conan remote remove conan-rc --force || true
           conan remote remove conan-stable --force || true
+          conan remote add conancenter https://center.conan.io --force || true
           conan remote add conan-rc "${{ secrets.CONAN_RC_URL }}" --force
           conan remote add conan-stable "${{ secrets.CONAN_STABLE_URL }}" --force
           conan remote list
