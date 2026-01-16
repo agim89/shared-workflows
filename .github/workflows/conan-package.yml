@@ -56,7 +56,7 @@ jobs:
         shell: bash
 
       - name: Authenticate to Conan remote (if credentials provided)
-        if: ${{ secrets.CONAN_USERNAME != '' && secrets.CONAN_PASSWORD != '' }}
+        if: secrets.CONAN_USERNAME != ''
         run: |
           conan remote login "${{ inputs.remote }}" "${{ secrets.CONAN_USERNAME }}" -p "${{ secrets.CONAN_PASSWORD }}"
         shell: bash
