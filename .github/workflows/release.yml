@@ -158,10 +158,17 @@ jobs:
           CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
         shell: bash
 
+      - name: Configure git user
+        run: |
+          git config --global user.email "github-actions@github.com"
+          git config --global user.name "GitHub Actions"
+        shell: bash
+
       - name: Create Git tag
         run: |
           git tag -a "v${{ env.FINAL_VERSION }}" -m "Release ${{ env.FINAL_VERSION }}"
           git push origin "v${{ env.FINAL_VERSION }}"
+        shell: bash
 
       - name: Create GitHub Release
         uses: actions/create-release@v1
