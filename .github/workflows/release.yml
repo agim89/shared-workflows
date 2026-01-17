@@ -140,22 +140,19 @@ jobs:
       - name: Verify RC package exists
         run: |
           echo "Verifying RC package exists: mylib/${{ env.RC_VERSION }}"
-          conan download "mylib/${{ env.RC_VERSION }}" --remote=conan-rc
+          conan download "mylib/${{ env.RC_VERSION }}:*" --remote=conan-rc
         env:
           CONAN_LOGIN_USERNAME: ${{ secrets.CONAN_USERNAME }}
           CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
         shell: bash
 
-      - name: Copy RC package to release version
-        run: |
-          echo "Copying mylib/${{ env.RC_VERSION }} to mylib/${{ env.FINAL_VERSION }}"
-          conan copy "mylib/${{ env.RC_VERSION }}:*" --folder=. mylib/${{ env.FINAL_VERSION }}@
-        shell: bash
-
       - name: Promote RC to stable
         run: |
-          echo "Promoting mylib/${{ env.FINAL_VERSION }} to conan-stable"
-          conan upload "mylib/${{ env.FINAL_VERSION }}" --remote=conan-stable --confirm
+          echo "RC package in cache:"
+          conan list "mylib/${{ env.RC_VERSION }}"
+          echo ""
+          echo "Uploading mylib/${{ env.RC_VERSION }} to conan-stable"
+          conan upload "mylib/${{ env.RC_VERSION }}:*" --remote=conan-stable --confirm
         env:
           CONAN_LOGIN_USERNAME: ${{ secrets.CONAN_USERNAME }}
           CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
