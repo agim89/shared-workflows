@@ -122,15 +122,27 @@ jobs:
           RC_VERSION="${{ inputs.version }}-dev-${SHORT_SHA}"
           echo "RC_VERSION=${RC_VERSION}" >> $GITHUB_ENV
           echo "FINAL_VERSION=${{ inputs.version }}" >> $GITHUB_ENV
+          echo "Attempting to download: mylib/${RC_VERSION}"
+
+      - name: Verify RC package exists
+        run: |
+          echo "Listing packages matching mylib/1.2.0-dev-* in conan-rc:"
+          conan list "mylib/1.2.0-dev-*" --remote=conan-rc || echo "No packages found"
+          echo "Attempting to download mylib/${{ env.RC_VERSION }}"
+          conan download "mylib/${{ env.RC_VERSION }}" --remote=conan-rc
+        env:
+          CONAN_LOGIN_USERNAME: ${{ secrets.CONAN_USERNAME }}
+          CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
+        shell: bash
 
       - name: Promote RC to stable
         run: |
-          conan download "mylib/${{ env.RC_VERSION }}" --remote=conan-rc
+          echo "Promoting mylib/${{ env.RC_VERSION }} to ${{ env.FINAL_VERSION }}"
           conan upload "mylib/${{ env.FINAL_VERSION }}" --remote=conan-stable --confirm
         env:
           CONAN_LOGIN_USERNAME: ${{ secrets.CONAN_USERNAME }}
           CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
-        continue-on-error: false
+        shell: bash
 
       - name: Create Git tag
         run: |

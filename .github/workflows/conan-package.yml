@@ -89,6 +89,13 @@ jobs:
           CONAN_LOGIN_USERNAME: ${{ secrets.CONAN_USERNAME }}
           CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
 
+      - name: Verify package was created
+        run: conan list "mylib/${{ env.CONAN_VERSION }}"
+        shell: bash
+
       - name: Upload to remote
-        run: conan upload "mylib/${{ env.CONAN_VERSION }}" --remote="${{ inputs.remote }}" --confirm
-        continue-on-error: true
+        run: |
+          echo "Uploading mylib/${{ env.CONAN_VERSION }} to ${{ inputs.remote }}"
+          conan upload "mylib/${{ env.CONAN_VERSION }}" --remote="${{ inputs.remote }}" --confirm
+          echo "Upload completed successfully"
+        shell: bash
