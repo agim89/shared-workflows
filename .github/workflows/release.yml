@@ -79,6 +79,11 @@ on:
       version:
         required: true
         type: string
+      rc_version:
+        required: false
+        type: string
+        default: ""
+        description: "Exact RC version to promote (e.g., 1.2.0-dev-abc1234). If not provided, the most recent RC is used."
 
 jobs:
   release:
@@ -116,19 +121,28 @@ jobs:
 
       - name: Download RC package from conan-rc
         run: |
-          # Get short SHA from last RC build
-          git log --oneline -1
-          SHORT_SHA=$(git rev-parse --short HEAD)
-          RC_VERSION="${{ inputs.version }}-dev-${SHORT_SHA}"
+          if [ -n "${{ inputs.rc_version }}" ]; then
+            # Use explicit RC version from input
+            RC_VERSION="${{ inputs.rc_version }}"
+            echo "Using provided RC version: ${RC_VERSION}"
+          else
+            # Query for the most recent RC version
+            echo "Querying for most recent RC version matching ${{ inputs.version }}-dev-*"
+            RC_VERSION=$(conan list "mylib/${{ inputs.version }}-dev-*" --remote=conan-rc 2>/dev/null | grep "mylib/" | tail -1 | sed 's/.*mylib\///' | tr -d ' ')
+            if [ -z "${RC_VERSION}" ]; then
+              echo "ERROR: No RC version found matching ${{ inputs.version }}-dev-*"
+              exit 1
+            fi
+            echo "Found RC version: ${RC_VERSION}"
+          fi
+          
           echo "RC_VERSION=${RC_VERSION}" >> $GITHUB_ENV
           echo "FINAL_VERSION=${{ inputs.version }}" >> $GITHUB_ENV
           echo "Attempting to download: mylib/${RC_VERSION}"
 
       - name: Verify RC package exists
         run: |
-          echo "Listing packages matching mylib/1.2.0-dev-* in conan-rc:"
-          conan list "mylib/1.2.0-dev-*" --remote=conan-rc || echo "No packages found"
-          echo "Attempting to download mylib/${{ env.RC_VERSION }}"
+          echo "Verifying RC package exists: mylib/${{ env.RC_VERSION }}"
           conan download "mylib/${{ env.RC_VERSION }}" --remote=conan-rc
         env:
           CONAN_LOGIN_USERNAME: ${{ secrets.CONAN_USERNAME }}
