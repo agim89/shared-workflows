@@ -166,6 +166,11 @@ jobs:
 
       - name: Create Git tag
         run: |
+          if git rev-parse "v${{ env.FINAL_VERSION }}" >/dev/null 2>&1; then
+            echo "Tag v${{ env.FINAL_VERSION }} already exists, deleting and recreating..."
+            git tag -d "v${{ env.FINAL_VERSION }}"
+            git push origin ":refs/tags/v${{ env.FINAL_VERSION }}" || true
+          fi
           git tag -a "v${{ env.FINAL_VERSION }}" -m "Release ${{ env.FINAL_VERSION }}"
           git push origin "v${{ env.FINAL_VERSION }}"
         shell: bash
