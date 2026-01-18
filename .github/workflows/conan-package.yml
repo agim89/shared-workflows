@@ -72,20 +72,18 @@ jobs:
         shell: bash
         continue-on-error: true
 
-      - name: Block if release version exists in conan-stable (RC builds only)
-        if: ${{ inputs.is_rc }}
+      - name: Check if release version exists in conan-stable
+        if: ${{ !inputs.is_rc }}
         run: |
-          # Extract base version without -dev suffix
-          BASE_VERSION=$(echo "${{ env.CONAN_VERSION }}" | sed 's/-dev-.*//')
-          echo "Checking if mylib/${BASE_VERSION} exists in conan-stable..."
+          echo "Checking if mylib/${{ env.CONAN_VERSION }} exists in conan-stable..."
           
-          if conan list "mylib/${BASE_VERSION}" --remote=conan-stable 2>&1 | grep -q "mylib/${BASE_VERSION}"; then
-            echo "ERROR: Release version mylib/${BASE_VERSION} already exists in conan-stable!"
-            echo "Cannot create RC for a version that's already released."
+          if conan list "mylib/${{ env.CONAN_VERSION }}" --remote=conan-stable 2>&1 | grep -q "mylib/${{ env.CONAN_VERSION }}"; then
+            echo "ERROR: Release version mylib/${{ env.CONAN_VERSION }} already exists in conan-stable!"
+            echo "Cannot release a version that's already been released."
             exit 1
           fi
           
-          echo "✓ Version ${BASE_VERSION} not found in conan-stable, safe to proceed with RC"
+          echo "✓ Version ${{ env.CONAN_VERSION }} not found in conan-stable, safe to proceed with release"
         shell: bash
         env:
           CONAN_LOGIN_USERNAME: ${{ secrets.CONAN_USERNAME }}
