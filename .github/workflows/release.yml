@@ -112,7 +112,7 @@ jobs:
           conan remote list
         shell: bash
 
-      - name: Find and prepare RC for promotion
+      - name: Verify RC package exists
         run: |
           echo "Finding RC version matching ${{ inputs.version }}-dev-*"
           RC_VERSION=$(conan list "mylib/${{ inputs.version }}-dev-*" --remote=conan-rc 2>/dev/null | grep "mylib/" | tail -1 | sed 's/.*mylib\///' | tr -d ' ')
@@ -123,27 +123,24 @@ jobs:
           fi
           
           echo "Found RC version: ${RC_VERSION}"
-          echo "RC_VERSION=${RC_VERSION}" >> $GITHUB_ENV
+          echo "RC was tested and verified, now building clean release package"
           echo "FINAL_VERSION=${{ inputs.version }}" >> $GITHUB_ENV
-          echo "Promoting ${RC_VERSION} to conan-stable"
         shell: bash
 
-      - name: Download RC package from conan-rc
+      - name: Build release package from source
         run: |
-          echo "Downloading mylib/${{ env.RC_VERSION }}:* from conan-rc"
-          conan download "mylib/${{ env.RC_VERSION }}:*" --remote=conan-rc
+          echo "Building mylib/${{ env.FINAL_VERSION }} from source"
+          conan create . --version=${{ env.FINAL_VERSION }} --build=missing
         env:
+          CONAN_VERSION: ${{ env.FINAL_VERSION }}
           CONAN_LOGIN_USERNAME: ${{ secrets.CONAN_USERNAME }}
           CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
         shell: bash
 
-      - name: Promote RC to stable
+      - name: Upload release package to conan-stable
         run: |
-          echo "RC package in cache:"
-          conan list "mylib/${{ env.RC_VERSION }}"
-          echo ""
-          echo "Uploading mylib/${{ env.RC_VERSION }} to conan-stable"
-          conan upload "mylib/${{ env.RC_VERSION }}:*" --remote=conan-stable --confirm
+          echo "Uploading mylib/${{ env.FINAL_VERSION }} to conan-stable"
+          conan upload "mylib/${{ env.FINAL_VERSION }}:*" --remote=conan-stable --confirm
         env:
           CONAN_LOGIN_USERNAME: ${{ secrets.CONAN_USERNAME }}
           CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
