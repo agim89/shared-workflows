@@ -79,11 +79,7 @@ on:
       version:
         required: true
         type: string
-      rc_version:
-        required: false
-        type: string
-        default: ""
-        description: "Exact RC version to promote (e.g., 1.2.0-dev-abc1234). If not provided, the most recent RC is used."
+        description: "Release version (e.g., 1.3.0). The workflow will find and promote the matching RC."
 
 jobs:
   release:
@@ -116,30 +112,25 @@ jobs:
           conan remote list
         shell: bash
 
-      - name: Download RC package from conan-rc
+      - name: Find and prepare RC for promotion
         run: |
-          if [ -n "${{ inputs.rc_version }}" ]; then
-            # Use explicit RC version from input
-            RC_VERSION="${{ inputs.rc_version }}"
-            echo "Using provided RC version: ${RC_VERSION}"
-          else
-            # Query for the most recent RC version
-            echo "Querying for most recent RC version matching ${{ inputs.version }}-dev-*"
-            RC_VERSION=$(conan list "mylib/${{ inputs.version }}-dev-*" --remote=conan-rc 2>/dev/null | grep "mylib/" | tail -1 | sed 's/.*mylib\///' | tr -d ' ')
-            if [ -z "${RC_VERSION}" ]; then
-              echo "ERROR: No RC version found matching ${{ inputs.version }}-dev-*"
-              exit 1
-            fi
-            echo "Found RC version: ${RC_VERSION}"
+          echo "Finding RC version matching ${{ inputs.version }}-dev-*"
+          RC_VERSION=$(conan list "mylib/${{ inputs.version }}-dev-*" --remote=conan-rc 2>/dev/null | grep "mylib/" | tail -1 | sed 's/.*mylib\///' | tr -d ' ')
+          
+          if [ -z "${RC_VERSION}" ]; then
+            echo "ERROR: No RC version found matching ${{ inputs.version }}-dev-*"
+            exit 1
           fi
           
+          echo "Found RC version: ${RC_VERSION}"
           echo "RC_VERSION=${RC_VERSION}" >> $GITHUB_ENV
           echo "FINAL_VERSION=${{ inputs.version }}" >> $GITHUB_ENV
-          echo "Attempting to download: mylib/${RC_VERSION}"
+          echo "Promoting ${RC_VERSION} to conan-stable"
+        shell: bash
 
-      - name: Verify RC package exists
+      - name: Download RC package from conan-rc
         run: |
-          echo "Verifying RC package exists: mylib/${{ env.RC_VERSION }}"
+          echo "Downloading mylib/${{ env.RC_VERSION }}:* from conan-rc"
           conan download "mylib/${{ env.RC_VERSION }}:*" --remote=conan-rc
         env:
           CONAN_LOGIN_USERNAME: ${{ secrets.CONAN_USERNAME }}
