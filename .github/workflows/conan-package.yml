@@ -131,7 +131,15 @@ jobs:
             -of build
           cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release
           cmake --build build --config Release
-          ./build/Release/consumer_test || ./build/consumer_test
+          # Find and run the executable (handles different paths on different platforms)
+          if [ -f "./build/Release/consumer" ]; then
+            ./build/Release/consumer
+          elif [ -f "./build/consumer" ]; then
+            ./build/consumer
+          else
+            echo "ERROR: Consumer executable not found"
+            exit 1
+          fi
           echo "✓ Local integration test passed"
         shell: bash
         continue-on-error: false
