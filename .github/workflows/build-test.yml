@@ -3,7 +3,8 @@ on:
   workflow_call:
 
 jobs:
-  build:
+  build-and-test:
+    name: Build and Test (${{ matrix.os }})
     strategy:
       matrix:
         include:
