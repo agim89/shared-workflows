@@ -79,10 +79,17 @@ jobs:
           BASE_VERSION=$(echo "${{ env.CONAN_VERSION }}" | sed 's/-dev-.*//')
           echo "Checking if base version mylib/${BASE_VERSION} exists in conan-stable..."
           
-          if conan list "mylib/${BASE_VERSION}" --remote=conan-stable 2>&1 | grep -q "mylib/${BASE_VERSION}"; then
+          # Use conan search with explicit format to check existence
+          SEARCH_RESULT=$(conan list "mylib/${BASE_VERSION}:*" --remote=conan-stable 2>&1 || true)
+          
+          # More strict check: look for exact package listing line
+          if echo "$SEARCH_RESULT" | grep -E "^mylib/${BASE_VERSION}"; then
             echo "ERROR: Release version mylib/${BASE_VERSION} already exists in conan-stable!"
             echo "Cannot create RC for a version that's already been released."
             echo "Please bump VERSION to the next version (e.g., from ${BASE_VERSION} to next version)."
+            echo ""
+            echo "Debug info - Full search output:"
+            echo "$SEARCH_RESULT"
             exit 1
           fi
           
@@ -97,9 +104,16 @@ jobs:
         run: |
           echo "Checking if mylib/${{ env.CONAN_VERSION }} exists in conan-stable..."
           
-          if conan list "mylib/${{ env.CONAN_VERSION }}" --remote=conan-stable 2>&1 | grep -q "mylib/${{ env.CONAN_VERSION }}"; then
+          # Use conan search with explicit format to check existence
+          SEARCH_RESULT=$(conan list "mylib/${{ env.CONAN_VERSION }}:*" --remote=conan-stable 2>&1 || true)
+          
+          # More strict check: look for exact package listing line
+          if echo "$SEARCH_RESULT" | grep -E "^mylib/${{ env.CONAN_VERSION }}"; then
             echo "ERROR: Release version mylib/${{ env.CONAN_VERSION }} already exists in conan-stable!"
             echo "Cannot release a version that's already been released."
+            echo ""
+            echo "Debug info - Full search output:"
+            echo "$SEARCH_RESULT"
             exit 1
           fi
           
