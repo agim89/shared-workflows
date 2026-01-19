@@ -81,13 +81,18 @@ jobs:
 
       - name: Create Git tag
         run: |
-          if git rev-parse "v${{ env.FINAL_VERSION }}" >/dev/null 2>&1; then
-            echo "Tag v${{ env.FINAL_VERSION }} already exists, deleting and recreating..."
-            git tag -d "v${{ env.FINAL_VERSION }}"
-            git push origin ":refs/tags/v${{ env.FINAL_VERSION }}" || true
+          TAG_NAME="v${{ env.FINAL_VERSION }}"
+          
+          # Check if tag already exists on remote
+          if git ls-remote --tags origin "${TAG_NAME}" | grep -q "${TAG_NAME}"; then
+            echo "ERROR: Tag ${TAG_NAME} already exists on remote. This version may already be released."
+            echo "If re-releasing is needed, delete the tag manually: git push origin :refs/tags/${TAG_NAME}"
+            exit 1
           fi
-          git tag -a "v${{ env.FINAL_VERSION }}" -m "Release ${{ env.FINAL_VERSION }}"
-          git push origin "v${{ env.FINAL_VERSION }}"
+          
+          # Create and push tag
+          git tag -a "${TAG_NAME}" -m "Release ${{ env.FINAL_VERSION }}"
+          git push origin "${TAG_NAME}"
         shell: bash
 
       - name: Create GitHub Release
