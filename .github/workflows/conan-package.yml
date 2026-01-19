@@ -72,7 +72,27 @@ jobs:
         shell: bash
         continue-on-error: true
 
-      - name: Check if release version exists in conan-stable
+      - name: Block if base version exists in conan-stable (RC builds)
+        if: ${{ inputs.is_rc }}
+        run: |
+          # Extract base version without -dev suffix
+          BASE_VERSION=$(echo "${{ env.CONAN_VERSION }}" | sed 's/-dev-.*//')
+          echo "Checking if base version mylib/${BASE_VERSION} exists in conan-stable..."
+          
+          if conan list "mylib/${BASE_VERSION}" --remote=conan-stable 2>&1 | grep -q "mylib/${BASE_VERSION}"; then
+            echo "ERROR: Release version mylib/${BASE_VERSION} already exists in conan-stable!"
+            echo "Cannot create RC for a version that's already been released."
+            echo "Please bump VERSION to the next version (e.g., from ${BASE_VERSION} to next version)."
+            exit 1
+          fi
+          
+          echo "✓ Base version ${BASE_VERSION} not found in conan-stable, safe to proceed with RC"
+        shell: bash
+        env:
+          CONAN_LOGIN_USERNAME: ${{ secrets.CONAN_USERNAME }}
+          CONAN_PASSWORD: ${{ secrets.CONAN_PASSWORD }}
+
+      - name: Check if release version exists in conan-stable (Release builds)
         if: ${{ !inputs.is_rc }}
         run: |
           echo "Checking if mylib/${{ env.CONAN_VERSION }} exists in conan-stable..."
@@ -99,6 +119,22 @@ jobs:
       - name: Verify package was created
         run: conan list "mylib/${{ env.CONAN_VERSION }}"
         shell: bash
+
+      - name: Test package locally (before upload)
+        if: ${{ inputs.is_rc }}
+        run: |
+          echo "Testing RC package from local cache before uploading..."
+          cd consumer-test
+          conan install --requires=mylib/${{ env.CONAN_VERSION }} \
+            -g CMakeDeps -g CMakeToolchain \
+            --build=missing \
+            -of build
+          cmake -B build -S . -DCMAKE_TOOLCHAIN_FILE=build/conan_toolchain.cmake -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --config Release
+          ./build/Release/consumer_test || ./build/consumer_test
+          echo "✓ Local integration test passed"
+        shell: bash
+        continue-on-error: false
 
       - name: Upload to remote
         run: |
